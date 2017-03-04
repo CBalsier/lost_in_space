@@ -124,9 +124,6 @@ class LostInSpace(Application):
             for j in range(0,self.model.height):
                 x = (self.offset_x + i + size[0])%size[0]
                 y = (self.offset_y + j + size[1])%size[1]
-                if i == 0 and j == 0:
-                    print self.offset_x + i
-                    print x, y
                 c = self.image.getpixel((x,y))
                 r = c[0]/255.
                 g = c[1]/255.
