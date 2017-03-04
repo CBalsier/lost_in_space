@@ -13,9 +13,11 @@ import time
 
 from spawn import Spawn
 
-size = 50,50
-MAX_SPEED = 1
+#size must be greater than the table size
+size = 20,20
+MAX_SPEED = 3
 MIN_SPEED = 1
+
 
 class LostInSpace(Application):
     def __init__(self, argparser):
@@ -40,11 +42,12 @@ class LostInSpace(Application):
             if coord in spawn.points:
                 return spawn
 
-    def spawn_source(self,position=[random.randint(0,size[0]),random.randint(0,size[1])], parent = None):
+    def spawn_source(self,position, parent = None):
         new_spawn=Spawn(size, position, parent)
         self.spawns.append(new_spawn)
         for point in new_spawn.points:
             self.source_spots.append(point)
+        print "spawning %s" % str(new_spawn.points)
 
     def mix_color(self,(r1,g1,b1),(r2,g2,b2)):
         r = (r1+r2)/2
@@ -57,17 +60,19 @@ class LostInSpace(Application):
         pygame.event.pump()
         keys = pygame.key.get_pressed()
         if keys[K_UP]:
-            self.offset_y -= 1 % size[1]
+            self.offset_y = (self.offset_y - 1) % size[1]
             action = True
         elif keys[K_DOWN]:
-            self.offset_y += 1 % size[1]
+            self.offset_y = (self.offset_y + 1) % size[1]
             action = True
         elif keys[K_RIGHT]:
-            self.offset_x += 1 % size[0]
+            self.offset_x = (self.offset_x + 1) % size[0]
             action = True
         elif keys[K_LEFT]:
-            self.offset_x -= 1 % size[0]
+            self.offset_x = (self.offset_x - 1) % size[0]
             action = True
+        elif keys[K_ESCAPE]:
+            self.state = 'end'
         elif keys[K_SPACE]:
             if self.state == 'init':
                 with self.model:
@@ -84,8 +89,6 @@ class LostInSpace(Application):
 
                     self.state = 'running'
                     action = True
-            else:
-                self.state = 'end'
 
         if self.state == 'init':
             pass
@@ -99,8 +102,10 @@ class LostInSpace(Application):
                 self.color = hsv_to_rgb(rgb_to_hsv(self.color)[0], brightness, rgb_to_hsv(self.color)[2])
 
                 # if we are on a spot
-                if [self.offset_x + self.x, self.offset_y + self.y] in self.source_spots:
-                    real_spawn = self.find_spawn([self.offset_x + self.x,self.offset_y + self.y])
+                x = (self.offset_x + self.x)%size[0]
+                y = (self.offset_y + self.y)%size[1]
+                if [x, y] in self.source_spots:
+                    real_spawn = self.find_spawn([x,y])
                     self.base_color = real_spawn.color
                     r = int(round(real_spawn.color[0] * 255))
                     g = int(round(real_spawn.color[1] * 255))
@@ -113,6 +118,8 @@ class LostInSpace(Application):
                     for point in real_spawn.points:
                         self.source_spots.remove(point)
                     self.spawns.remove(real_spawn)
+                    random.seed()
+                    self.spawn_source([random.randint(0,size[0]),random.randint(0,size[1])],parent=real_spawn)
                 # else we tranform the current color
                 else:
                     # transforming player color to PIL RGB
@@ -132,6 +139,7 @@ class LostInSpace(Application):
                 self.draw_grid()
 
 
+
         if not action:
             self.speed=max(self.speed-1, MIN_SPEED)
 
@@ -148,14 +156,17 @@ class LostInSpace(Application):
                 self.model.set_pixel(j, i, [r, g ,b])
         # draw spawn
         for spawn in self.source_spots:
-            if (self.offset_x <= spawn[0] < self.offset_x+self.model.width) and (self.offset_y <= spawn[1] < self.offset_y+self.model.height):
+
+            if abs(spawn[0] - (self.offset_x + self.x)%size[0]) <= self.model.width/2 and abs(spawn[1] - (self.offset_y + self.y)%size[1]) <= self.model.height/2:
                 real_spawn = self.find_spawn(spawn)
                 print real_spawn
                 for point in real_spawn.points:
-                    if (self.offset_x <= point[0] < self.offset_x + self.model.width) and (
-                            self.offset_y <= point[1] < self.offset_y + self.model.height):
-                        self.model.set_pixel(point[1]-self.offset_y,point[0]-self.offset_x,real_spawn.color)
-                    print point
+                    #if (self.offset_x <= point[0] < self.offset_x + self.model.width) and (
+                            #self.offset_y <= point[1] < self.offset_y + self.model.height):
+                        #self.model.set_pixel(point[1]-self.offset_y,point[0]-self.offset_x,real_spawn.color)
+                    #print point
+                    self.model.set_pixel((point[1]-self.offset_y + size[0])%size[0],(point[0]-self.offset_x +size[1])%size[1],real_spawn.color)
+
         if self.color == (1.0, 1.0, 1.0):
             self.model.set_pixel(self.y, self.x, 'black')
 
