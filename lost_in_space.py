@@ -194,7 +194,9 @@ class LostInSpace(Application):
             #if abs(spawn[0] - (self.offset_x + self.x)%size[0]) <= self.model.width/2 and abs(spawn[1] - (self.offset_y + self.y)%size[1]) <= self.model.height/2:
             for real_spawn in self.spawns:
                 try:
-                    self.model.set_pixel((real_spawn.y-self.offset_y+size[1])%size[1],(real_spawn.x-self.offset_x+size[0])%size[0],real_spawn.color)
+                    if real_spawn.blink:
+                        self.model.set_pixel((real_spawn.y-self.offset_y+size[1])%size[1],(real_spawn.x-self.offset_x+size[0])%size[0],real_spawn.color)
+                    real_spawn.blink = not real_spawn.blink
                 except:
                     pass
         if self.color == (1.0, 1.0, 1.0):
