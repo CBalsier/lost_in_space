@@ -14,7 +14,7 @@ import time
 from spawn import Spawn
 
 #size must be greater than the table size
-size = 50,50
+size = 25,25
 MAX_SPEED = 3
 MIN_SPEED = 1
 
@@ -37,6 +37,7 @@ class LostInSpace(Application):
         self.spawns = []
         self.speed = 1
         self.fade = 1
+        self.vector = None
 
     def find_spawn(self, coord):
         for spawn in self.spawns:
@@ -61,15 +62,19 @@ class LostInSpace(Application):
         keys = pygame.key.get_pressed()
         if keys[K_UP]:
             self.offset_y = (self.offset_y - 1) % size[1]
+            self.vector = 'up'
             action = True
         elif keys[K_DOWN]:
             self.offset_y = (self.offset_y + 1) % size[1]
+            self.vector = 'down'
             action = True
         elif keys[K_RIGHT]:
             self.offset_x = (self.offset_x + 1) % size[0]
+            self.vector = 'right'
             action = True
         elif keys[K_LEFT]:
             self.offset_x = (self.offset_x - 1) % size[0]
+            self.vector = 'left'
             action = True
         elif keys[K_SPACE]:
             if self.state == 'init':
@@ -90,7 +95,19 @@ class LostInSpace(Application):
 
         if keys[K_ESCAPE]:
             self.state = 'end'
-
+        if not action:
+            self.speed = max(self.speed/1.2, MIN_SPEED)
+            self.fade = max(self.fade/1.2, 1)
+            if self.speed!=MIN_SPEED:
+                if self.vector=='up':
+                    self.offset_y = (self.offset_y - 1) % size[1]
+                elif self.vector=='down':
+                    self.offset_y = (self.offset_y + 1) % size[1]
+                elif self.vector=='left':
+                    self.offset_x = (self.offset_x - 1) % size[0]
+                elif self.vector=='right':
+                    self.offset_x = (self.offset_x + 1) % size[0]
+                action = True
         if self.state == 'init':
             pass
             # self.arbalet.user_model.write("Draw me", 'blue')
@@ -105,7 +122,6 @@ class LostInSpace(Application):
                 x = (self.offset_x + self.x)%size[0]
                 y = (self.offset_y + self.y)%size[1]
                 for spawn in self.spawns:
-                    print x,y,spawn.x, spawn.y
                     if (x, y) == (spawn.x, spawn.y):
                         self.base_color = spawn.color
                         r = int(round(spawn.color[0] * 255))
@@ -143,13 +159,12 @@ class LostInSpace(Application):
                         self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
                                             (r, g, b))
                 # finaly, we draw the grid
-                self.draw_grid()
 
 
 
-        if not action:
-            self.speed = max(self.speed/2, MIN_SPEED)
-            self.fade = max(self.fade/2, 1)
+
+
+        self.draw_grid()
 
     def draw_grid(self):
         #drag from image
