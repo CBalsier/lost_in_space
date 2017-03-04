@@ -154,19 +154,17 @@ class LostInSpace(Application):
                     b = int(round(self.color[2] * 255))
 
                     # we do not print on the image if we are black ou white
-                    if not ((r == 255 and g == 255 and b == 255) or (r == 0 and g == 0 and b == 0)):
+                    if not (rgb_to_hsv(self.color)[0] == 0.):
                         actual_color = self.image.getpixel(
                             ((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]))
                         if actual_color != (255, 255, 255):
                             r, g, b = self.mix_color((r, g, b), (actual_color[0], actual_color[1], actual_color[2]))
                         self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
                                             (r, g, b))
-                # finaly, we draw the grid
+                    else:
+                        self.color=(1.0, 1.0, 1.0)
 
-
-
-
-
+        # finaly, we draw the grid
         self.draw_grid()
 
     def draw_grid(self):
