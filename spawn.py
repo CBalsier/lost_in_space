@@ -99,27 +99,27 @@ class Spawn():
         sound_files = [
                 # red
                 [
-                    "red_0.wav","red_1.wav","red_2.wav","red_2.wav"
+                    "red_0.wav","red_1.wav","red_2.wav","red_3.wav"
                     ],
                 # green
                 [
-                    "green_0.wav","green_1.wav","green_2.wav","green_2.wav"
+                    "green_0.wav","green_1.wav","green_2.wav","green_3.wav"
                     ],
                 # blue
                 [
-                    "blue_0.wav","blue_1.wav","blue_2.wav","blue_2.wav"
+                    "blue_0.wav","blue_1.wav","blue_2.wav","blue_3.wav"
                     ],
                 # cyan
                 [
-                    "cyan_0.wav","cyan_1.wav","cyan_2.wav","cyan_2.wav"
+                    "cyan_0.wav","cyan_1.wav","cyan_2.wav","cyan_3.wav"
                     ],
                 # magenta
                 [
-                    "magenta_0.wav","magenta_1.wav","magenta_2.wav","magenta_2.wav"
+                    "magenta_0.wav","magenta_1.wav","magenta_2.wav","magenta_3.wav"
                     ],
                 #yellow
                 [
-                    "yellow_0.wav","yellow_1.wav","yellow_2.wav","yellow_2.wav"
+                    "yellow_0.wav","yellow_1.wav","yellow_2.wav","yellow_3.wav"
                     ]
                 ]
 
