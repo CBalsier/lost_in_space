@@ -44,8 +44,8 @@ class LostInSpace(Application):
             if coord in spawn.points:
                 return spawn
 
-    def spawn_source(self,position, parent = None):
-        new_spawn=Spawn(size, position, parent)
+    def spawn_source(self,position, parent = None, color=None):
+        new_spawn=Spawn(size, position, parent,color)
         self.spawns.append(new_spawn)
         for point in new_spawn.points:
             self.source_spots.append(point)
@@ -85,10 +85,12 @@ class LostInSpace(Application):
                     self.base_color = self.color
 
                     # spawn first stop near the player
-                    self.spawn_source([self.offset_x + self.x -2, self.offset_y + self.y])
-                    self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y])
-                    self.spawn_source([self.offset_x + self.x, self.offset_y + self.y - 2])
-                    self.spawn_source([self.offset_x + self.x, self.offset_y + self.y + 2])
+                    self.spawn_source([self.offset_x + self.x, self.offset_y + self.y + 2], color=0)
+                    self.spawn_source([self.offset_x + self.x - 2, self.offset_y + self.y + 1], color=1)
+                    self.spawn_source([self.offset_x + self.x - 2, self.offset_y + self.y - 1], color=2)
+                    self.spawn_source([self.offset_x + self.x, self.offset_y + self.y - 2], color=3)
+                    self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y + 1], color=4)
+                    self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y - 1], color=5)
 
                     self.state = 'running'
                     action = True
@@ -197,6 +199,8 @@ class LostInSpace(Application):
             self.event()
             time.sleep(0.25/self.speed)
         self.image.show()
+        self.model.set_all('black')
+        self.arbalet.user_model.write("Je suis Mondrian", 'blue')
 
 
 if __name__ == '__main__':

@@ -6,16 +6,16 @@ from pygame import mixer
 
 
 class Spawn():
-    def __init__(self,img_size, position,parent=None):
+    def __init__(self,img_size, position,parent=None, color = None):
         self.x = position[0]
         self.y = position[1]
-        default_colors = [[1.0,0,0],[0,1.0,0],[0,0,1.0],[0,1.0,1.0],[1.0,0,1.0],[1.0,1.0,0]] # RGBCMY
+        default_colors = [[0.83921,0.22745,0.17647],[0,0.64705,0.37254],[0,0.73725,0.78431],[0,0.61176,0.61176],[0.76470,0,0.21960],[0.96470,0.90588,0.11764]] # RGBCMY
         
         if parent is None:
             self.stage = 0
-            self.color = default_colors[randint(0,len(default_colors)-1)]
+            self.color = default_colors[color] if color is not None else default_colors[randint(0,len(default_colors)-1)]
         else:
-            self.color = parent.color
+            self.color = default_colors[color] if color is not None else parent.color
             self.stage = min(parent.stage +1, 3) # evolution stage : 0 = pixel, 1, 2, 3
         self.points = []
 
