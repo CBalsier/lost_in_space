@@ -11,6 +11,8 @@ from pygame.locals import *
 from PIL import Image
 import time
 
+from spawn import Spawn
+
 size = 50,50
 
 class LostInSpace(Application):
@@ -28,17 +30,27 @@ class LostInSpace(Application):
         self.state = 'init'
         self.image = Image.new('RGB',size, (255,255,255))
         self.source_spots = []
-
+        self.spawns = []
 
     def spawn_source(self,last_position=[random.randint(0,size[0]),random.randint(0,size[1])]):
+        position = last_position
+
+        for spawn in self.spawns:
+            if self.x == spawn.x:
+                if self.y == spawn.y:
+                    parent = spawn
+                    new_spawn=Spawn(position,parent,self.source_spots)
+                    self.spawns.append(new_spawn)
+        
         # Random generation
         #color = hsv_to_rgb(random.random(),random.random(), random.random())
         # Random in a list
-        color_list = ['red', 'green', 'blue', 'black']
-        color = color_list[random.randint(0,len(color_list))-1]
+        #color_list = ['red', 'green', 'blue', 'black']
+        #color_list = [[1,0,0], [0,1,0], [0,0,1], [0.5, 0.5,0]]
+        #color = color_list[random.randint(0,len(color_list))-1]
 
         # Random spawn
-        position = last_position #random (test que different de position actuelle)
+        #position = last_position #random (test que different de position actuelle)
         # Debug
         #pattern_list =[
                 #[[1,1],[0,0],[-1,-1],[1,-1],[-1,1]],
@@ -47,21 +59,25 @@ class LostInSpace(Application):
                 #]
                 # random dans une liste de formes (=liste de coordonnees)
         #pattern = pattern_list[random.randint(0,len(pattern_list))-1]# random dans une liste de formes (=liste de coordonnees)
-        pattern = [[0,0]]
-        for point in pattern:
-            new_x = position[0] + point[0]
-            new_y = position[1] + point[1]
-            if new_x < 0:
-                new_x = 0
-            elif new_x > (self.model.height-1):
-                new_x = self.model.height -1
-            if new_y < 0:
-                new_y = 0
-            elif new_y > (self.model.width-1):
-                new_y =self.model.width -1
-            self.model.set_pixel(new_x,new_y, color)
-            self.source_spots.append([new_x,new_y])
-            print self.source_spots
+        #pattern = [[0,0]]
+        #for point in pattern:
+            #new_x = position[0] + point[0]
+            #new_y = position[1] + point[1]
+            #if new_x < 0:
+                #new_x = 0
+            #elif new_x > (self.model.height-1):
+                #new_x = self.model.height -1
+            #if new_y < 0:
+                #new_y = 0
+            #elif new_y > (self.model.width-1):
+                #new_y =self.model.width -1
+            #self.model.set_pixel(new_x,new_y, color)
+            #r = int(round(color[0]*255))
+            #g = int(round(color[1]*255))
+            #b = int(round(color[2]*255))
+            #self.image.putpixel(((self.offset_x+new_x)%size[0], (self.offset_y+new_y)%size[1]), (r,g,b))
+            #self.source_spots.append([new_x,new_y])
+            #print self.source_spots
 
     def event(self):
         action = False
@@ -114,7 +130,9 @@ class LostInSpace(Application):
 
                 print self.source_spots
                 if [self.x, self.y] in self.source_spots:
-                    self.spawn_source([0,0])
+                    print "pixel on the source"
+                    self.spawn_source()
+                    self.color = self.image.getpixel((x,y))
 
     def draw_grid(self):
         for i in range(0,self.model.width):
