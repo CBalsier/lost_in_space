@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from random import randint
+from pygame import mixer
+
 
 class Spawn():
     def __init__(self,img_size, position,parent=None):
@@ -92,12 +94,40 @@ class Spawn():
                 # yellow stages 0 to 3
                 13
                 ]
-                
+        
+        sound_files = [
+                # red
+                [
+                    "red_0.wav","red_1.wav","red_2.wav","red_2.wav"
+                    ],
+                # green
+                [
+                    "green_0.wav","green_1.wav","green_2.wav","green_2.wav"
+                    ],
+                # blue
+                [
+                    "blue_0.wav","blue_1.wav","blue_2.wav","blue_2.wav"
+                    ],
+                # cyan
+                [
+                    "cyan_0.wav","cyan_1.wav","cyan_2.wav","cyan_2.wav"
+                    ],
+                # magenta
+                [
+                    "magenta_0.wav","magenta_1.wav","magenta_2.wav","magenta_2.wav"
+                    ],
+                #yellow
+                [
+                    "yellow_0.wav","yellow_1.wav","yellow_2.wav","yellow_2.wav"
+                    ]
+                ]
+
         color_index = default_colors.index(self.color)
         pattern = patterns[color_index][self.stage]
         self.speed = speed_mods[color_index]
         self.fading = fading_mods[color_index]
-
+        mixer.init(44100,-16,2,208)
+        self.sound_effect = mixer.Sound(sound_files[color_index][self.stage])
         for point in pattern:
             #print point
             self.points.append([(self.x + point[0] + img_size[0])%img_size[0],
