@@ -150,11 +150,12 @@ class LostInSpace(Application):
         for spawn in self.source_spots:
             if (self.offset_x <= spawn[0] < self.offset_x+self.model.width) and (self.offset_y <= spawn[1] < self.offset_y+self.model.height):
                 real_spawn = self.find_spawn(spawn)
+                print real_spawn
                 for point in real_spawn.points:
                     if (self.offset_x <= point[0] < self.offset_x + self.model.width) and (
                             self.offset_y <= point[1] < self.offset_y + self.model.height):
                         self.model.set_pixel(point[1]-self.offset_y,point[0]-self.offset_x,real_spawn.color)
-
+                    print point
         if self.color == (1.0, 1.0, 1.0):
             self.model.set_pixel(self.y, self.x, 'black')
 
