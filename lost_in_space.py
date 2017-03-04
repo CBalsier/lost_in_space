@@ -14,14 +14,14 @@ import time
 from spawn import Spawn
 
 size = 50,50
-MAX_SPEED = 10
+MAX_SPEED = 1
 MIN_SPEED = 1
 
 class LostInSpace(Application):
     def __init__(self, argparser):
         Application.__init__(self, argparser)
         self.base_color = None
-        self.color = None
+        self.color = (1.0, 1.0, 1.0)
         # relative coordonate to image center
         self.y = self.height/2
         self.x = self.width/2
@@ -46,6 +46,12 @@ class LostInSpace(Application):
         for point in new_spawn.points:
             self.source_spots.append(point)
 
+    def mix_color(self,(r1,g1,b1),(r2,g2,b2)):
+        r = (r1+r2)/2
+        g = (g2+g1)/2
+        b = (b1+b2)/2
+        return r,g,b
+
     def event(self):
         action = False
         pygame.event.pump()
@@ -62,36 +68,32 @@ class LostInSpace(Application):
         elif keys[K_LEFT]:
             self.offset_x -= 1 % size[0]
             action = True
-        if keys[K_ESCAPE]:
-            self.state = 'end'
         elif keys[K_SPACE]:
-            with self.model:
-                # set initial color
-                self.model.set_pixel(self.y, self.x, hsv_to_rgb(0, 1, 1))
-                self.color = self.model.get_pixel(self.y, self.x)
-                self.base_color = self.color
+            if self.state == 'init':
+                with self.model:
+                    # set initial color
+                    self.model.set_pixel(self.y, self.x, (1.0,1.0,1.0))
+                    self.color = self.model.get_pixel(self.y, self.x)
+                    self.base_color = self.color
 
-                # spawn first stop near the player
-                self.spawn_source([self.offset_x + 4, self.offset_y + 4])
+                    # spawn first stop near the player
+                    self.spawn_source([self.offset_x + self.x -2, self.offset_y + self.y])
+                    self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y])
+                    self.spawn_source([self.offset_x + self.x, self.offset_y + self.y - 2])
+                    self.spawn_source([self.offset_x + self.x, self.offset_y + self.y + 2])
 
-                self.state = 'running'
+                    self.state = 'running'
+                    action = True
+            else:
+                self.state = 'end'
 
         if self.state == 'init':
             pass
-            #self.arbalet.user_model.write("Draw me", 'blue')
+            # self.arbalet.user_model.write("Draw me", 'blue')
+
         elif self.state == 'running' and action:
             self.speed = min(self.speed+1,MAX_SPEED)
             with self.model:
-                # Generating image
-                r = int(round(self.color[0] * 255))
-                g = int(round(self.color[1] * 255))
-                b = int(round(self.color[2] * 255))
-
-
-                # we do not print if we are black ou white
-                if not((r == 255 and g == 255 and b == 255) or (r == 0 and g == 0 and b == 0)):
-                    self.image.putpixel(((self.offset_x+self.x)%size[0], (self.offset_y+self.y)%size[1]), (r,g,b))
-
                 # Changing color
                 brightness = max(round(rgb_to_hsv(self.color)[1] - 0.1, 1), 0)
                 self.color = hsv_to_rgb(rgb_to_hsv(self.color)[0], brightness, rgb_to_hsv(self.color)[2])
@@ -100,18 +102,41 @@ class LostInSpace(Application):
                 if [self.offset_x + self.x, self.offset_y + self.y] in self.source_spots:
                     real_spawn = self.find_spawn([self.offset_x + self.x,self.offset_y + self.y])
                     self.base_color = real_spawn.color
+                    r = int(round(real_spawn.color[0] * 255))
+                    g = int(round(real_spawn.color[1] * 255))
+                    b = int(round(real_spawn.color[2] * 255))
+                    self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
+                                        (r, g, b))
                     self.color = self.base_color
 
                     # remove spawn from list
                     for point in real_spawn.points:
                         self.source_spots.remove(point)
                     self.spawns.remove(real_spawn)
+                # else we tranform the current color
+                else:
+                    # transforming player color to PIL RGB
+                    r = int(round(self.color[0] * 255))
+                    g = int(round(self.color[1] * 255))
+                    b = int(round(self.color[2] * 255))
+
+                    # we do not print on the image if we are black ou white
+                    if not ((r == 255 and g == 255 and b == 255) or (r == 0 and g == 0 and b == 0)):
+                        actual_color = self.image.getpixel(
+                            ((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]))
+                        if actual_color != (255, 255, 255):
+                            r, g, b = self.mix_color((r, g, b), (actual_color[0], actual_color[1], actual_color[2]))
+                        self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
+                                            (r, g, b))
                 # finaly, we draw the grid
                 self.draw_grid()
+
+
         if not action:
             self.speed=max(self.speed-1, MIN_SPEED)
 
     def draw_grid(self):
+        #drag from image
         for i in range(0,self.model.width):
             for j in range(0,self.model.height):
                 x = (self.offset_x + i + size[0])%size[0]
@@ -121,11 +146,14 @@ class LostInSpace(Application):
                 g = c[1]/255.
                 b = c[2]/255.
                 self.model.set_pixel(j, i, [r, g ,b])
+        # draw spawn
         for spawn in self.source_spots:
             if (self.offset_x <= spawn[0] < self.offset_x+self.model.width) and (self.offset_y <= spawn[1] < self.offset_y+self.model.height):
                 real_spawn = self.find_spawn(spawn)
                 for point in real_spawn.points:
-                    self.model.set_pixel(point[1]-self.offset_y,point[0]-self.offset_x,real_spawn.color)
+                    if (self.offset_x <= point[0] < self.offset_x + self.model.width) and (
+                            self.offset_y <= point[1] < self.offset_y + self.model.height):
+                        self.model.set_pixel(point[1]-self.offset_y,point[0]-self.offset_x,real_spawn.color)
 
         if self.color == (1.0, 1.0, 1.0):
             self.model.set_pixel(self.y, self.x, 'black')
@@ -137,7 +165,7 @@ class LostInSpace(Application):
         while self.state is not 'end':
             self.event()
             time.sleep(0.25/self.speed)
-        #self.image.show()
+        self.image.show()
 
 
 if __name__ == '__main__':
