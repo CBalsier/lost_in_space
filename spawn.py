@@ -47,27 +47,37 @@ class Spawn():
                 ]
         speed_mods = [
                 # red stages 0 to 3
-                #[
-                    #]
+                2,
                 # green stages 0 to 3
-                #[
-                    #]
+                1.6,
                 # blue stages 0 to 3
-                #[
-                    #]
+                1.3,
                 # cyan stages 0 to 3
-                #[
-                    #]
+                1.3,
                 # magenta stages 0 to 3
-                #[
-                    #]
+                2,
                 # yellow stages 0 to 3
-                #[
-                    #]
+                1.6
                 ]
-        global_index = default_colors.index(self.color)
-        pattern = patterns[global_index][self.stage]
-        # speed = speed_mods[global_index][self.stage]
+        fading_mods = [
+                # red stages 0 to 3
+                10,
+                # green stages 0 to 3
+                13,
+                # blue stages 0 to 3
+                17,
+                # cyan stages 0 to 3
+                17,
+                # magenta stages 0 to 3
+                10,
+                # yellow stages 0 to 3
+                13
+                ]
+                
+        color_index = default_colors.index(self.color)
+        pattern = patterns[color_index][self.stage]
+        self.speed = speed_mods[color_index]
+        self.fading = fading_mods[color_index]
 
         for point in pattern:
             #print point
