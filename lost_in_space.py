@@ -132,6 +132,7 @@ class LostInSpace(Application):
                         self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
                                             (r, g, b))
                         self.color = self.base_color
+                        spawn.sound_effect.play(-1)
 
                         # remove spawn from list
                         for point in spawn.points:

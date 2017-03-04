@@ -9,7 +9,7 @@ class Spawn():
     def __init__(self,img_size, position,parent=None, color = None):
         self.x = position[0]
         self.y = position[1]
-        default_colors = [[0.83921,0.22745,0.17647],[0,0.64705,0.37254],[0,0.73725,0.78431],[0,0.61176,0.61176],[0.76470,0,0.21960],[0.96470,0.90588,0.11764]] # RGBCMY
+        default_colors = [[0.83921,0.22745,0.17647],[0,0.64705,0.37254],[0,0.04705,0.38823],[0,0.61176,0.61176],[0.76470,0,0.21960],[0.96470,0.90588,0.11764]] # RGBCMY
         
         if parent is None:
             self.stage = 0
@@ -129,8 +129,9 @@ class Spawn():
         self.speed = speed_mods[color_index][min(self.stage,2)]
         self.fading = fading_mods[color_index][min(self.stage,2)]
 
-        mixer.init(44100,-16,2,208)
+        mixer.init(44100, 16, 2, 4096)
         self.sound_effect = mixer.Sound(sound_files[color_index][self.stage])
+
         for point in pattern:
             #print point
             self.points.append([(self.x + point[0] + img_size[0])%img_size[0],
