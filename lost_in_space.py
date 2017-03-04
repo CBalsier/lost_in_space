@@ -1,22 +1,15 @@
 #!/usr/bin/env python
 """
-    simpleTester.py - simple Arbalet tester.
-    Copyright 2015 Thierry Chantier
-    License: GPL version 3 http://www.gnu.org/licenses/gpl.html
-
-    Arbalet - ARduino-BAsed LEd Table
-    Copyright 2015 Thierry Chantier, Yoan Mollard - Arbalet project - http://github.com/arbalet-project
-    License: GPL version 3 http://www.gnu.org/licenses/gpl.html
+Digital Art Jam
 """
 
 from arbalet.core import Application, Rate
 import pygame, argparse
 
 
-class SimpleTester(Application):
+class LostInSpace(Application):
     def __init__(self, argparser):
         Application.__init__(self, argparser)
-        self.colors = ['red', 'green', 'blue']
         self.color = None
         self.base_color = None
         self.x = self.height/2
@@ -29,7 +22,7 @@ class SimpleTester(Application):
 
         with self.model:
             self.model.set_all('white')
-            self.model.set_pixel(self.x,self.y, self.colors[0])
+            self.model.set_pixel(self.x,self.y, 'red')
             self.color = self.model.get_pixel(self.x,self.y)
             self.base_color = self.color
         while 1:
@@ -50,6 +43,5 @@ class SimpleTester(Application):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Light every pixel one by one for hardware address debuging purposes. Columns are filled in first progressively, then rows. All pixels in a column share the same color.')
-    SimpleTester(parser).start()
+    parser = argparse.ArgumentParser(description='Do something :D')
+    LostInSpace(parser).start()
