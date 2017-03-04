@@ -14,6 +14,8 @@ import time
 from spawn import Spawn
 
 size = 50,50
+MAX_SPEED = 10
+MIN_SPEED = 1
 
 class LostInSpace(Application):
     def __init__(self, argparser):
@@ -31,6 +33,8 @@ class LostInSpace(Application):
         self.image = Image.new('RGB',size, (255,255,255))
         self.source_spots = []
         self.spawns = []
+        self.speed = 1
+
 
     def spawn_source(self,last_position=[random.randint(0,size[0]),random.randint(0,size[1])]):
         position = last_position
@@ -41,49 +45,11 @@ class LostInSpace(Application):
                     parent = spawn
                     new_spawn=Spawn(position,parent,self.source_spots)
                     self.spawns.append(new_spawn)
-        
-        # Random generation
-        #color = hsv_to_rgb(random.random(),random.random(), random.random())
-        # Random in a list
-        #color_list = ['red', 'green', 'blue', 'black']
-        #color_list = [[1,0,0], [0,1,0], [0,0,1], [0.5, 0.5,0]]
-        #color = color_list[random.randint(0,len(color_list))-1]
-
-        # Random spawn
-        #position = last_position #random (test que different de position actuelle)
-        # Debug
-        #pattern_list =[
-                #[[1,1],[0,0],[-1,-1],[1,-1],[-1,1]],
-                #[[0,1],[0,-1],[1,0],[-1,0]],
-                #[[0,1],[0,-1],[1,0],[3,1],[3,-1],[4,0]]
-                #]
-                # random dans une liste de formes (=liste de coordonnees)
-        #pattern = pattern_list[random.randint(0,len(pattern_list))-1]# random dans une liste de formes (=liste de coordonnees)
-        #pattern = [[0,0]]
-        #for point in pattern:
-            #new_x = position[0] + point[0]
-            #new_y = position[1] + point[1]
-            #if new_x < 0:
-                #new_x = 0
-            #elif new_x > (self.model.height-1):
-                #new_x = self.model.height -1
-            #if new_y < 0:
-                #new_y = 0
-            #elif new_y > (self.model.width-1):
-                #new_y =self.model.width -1
-            #self.model.set_pixel(new_x,new_y, color)
-            #r = int(round(color[0]*255))
-            #g = int(round(color[1]*255))
-            #b = int(round(color[2]*255))
-            #self.image.putpixel(((self.offset_x+new_x)%size[0], (self.offset_y+new_y)%size[1]), (r,g,b))
-            #self.source_spots.append([new_x,new_y])
-            #print self.source_spots
 
     def event(self):
         action = False
         pygame.event.pump()
         keys = pygame.key.get_pressed()
-        print keys[K_SPACE]
         if keys[K_UP]:
             self.offset_y -= 1 % size[1]
             action = True
@@ -99,9 +65,7 @@ class LostInSpace(Application):
         if keys[K_ESCAPE]:
             self.state = 'end'
         elif keys[K_SPACE]:
-            print 'init'
             with self.model:
-
                 # set initial color
                 self.model.set_pixel(self.y, self.x, hsv_to_rgb(0, 1, 1))
                 self.color = self.model.get_pixel(self.y, self.x)
@@ -116,23 +80,26 @@ class LostInSpace(Application):
             pass
             #self.arbalet.user_model.write("Draw me", 'blue')
         elif self.state == 'running' and action:
+            self.speed = min(self.speed+1,MAX_SPEED)
             with self.model:
                 # Generating image
                 r = int(round(self.color[0] * 255))
                 g = int(round(self.color[1] * 255))
                 b = int(round(self.color[2] * 255))
-                self.image.putpixel(((self.offset_x+self.x)%size[0], (self.offset_y+self.y)%size[1]), (r,g,b))
+                if r != 0. or g != 0 or b != 0:
+                    self.image.putpixel(((self.offset_x+self.x)%size[0], (self.offset_y+self.y)%size[1]), (r,g,b))
 
                 # Changing color
-                value = max(round(rgb_to_hsv(self.color)[2] - 0.2, 1), 0)
-                self.color = hsv_to_rgb(rgb_to_hsv(self.color)[0], rgb_to_hsv(self.color)[1], value)
+                brightness = max(round(rgb_to_hsv(self.color)[1] - 0.1, 1), 0)
+                self.color = hsv_to_rgb(rgb_to_hsv(self.color)[0], brightness, rgb_to_hsv(self.color)[2])
                 self.draw_grid()
 
-                print self.source_spots
                 if [self.x, self.y] in self.source_spots:
                     print "pixel on the source"
                     self.spawn_source()
                     self.color = self.image.getpixel((x,y))
+        if not action:
+            self.speed=max(self.speed-1, MIN_SPEED)
 
     def draw_grid(self):
         for i in range(0,self.model.width):
@@ -143,7 +110,9 @@ class LostInSpace(Application):
                 r = c[0]/255.
                 g = c[1]/255.
                 b = c[2]/255.
-                self.model.set_pixel(j, i, [r,g,b])
+                self.model.set_pixel(j, i, [r, g ,b])
+        if self.color == (1.0, 1.0, 1.0):
+            self.model.set_pixel(self.y, self.x, 'black')
 
     def run(self):
         # Update the screen every second.
@@ -151,7 +120,7 @@ class LostInSpace(Application):
 
         while self.state is not 'end':
             self.event()
-            time.sleep(0.1)
+            time.sleep(0.25/self.speed)
         self.image.show()
 
 
