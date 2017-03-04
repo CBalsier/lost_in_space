@@ -99,27 +99,27 @@ class Spawn():
         sound_files = [
                 # red
                 [
-                    "red_0.wav","red_1.wav","red_2.wav","red_3.wav"
+                    "red_0.ogg","red_1.ogg","red_2.ogg","red_3.ogg"
                     ],
                 # green
                 [
-                    "green_0.wav","green_1.wav","green_2.wav","green_3.wav"
+                    "green_0.ogg","green_1.ogg","green_2.ogg","green_3.ogg"
                     ],
                 # blue
                 [
-                    "blue_0.wav","blue_1.wav","blue_2.wav","blue_3.wav"
+                    "blue_0.ogg","blue_1.ogg","blue_2.ogg","blue_3.ogg"
                     ],
                 # cyan
                 [
-                    "cyan_0.wav","cyan_1.wav","cyan_2.wav","cyan_3.wav"
+                    "cyan_0.ogg","cyan_1.ogg","cyan_2.ogg","cyan_3.ogg"
                     ],
                 # magenta
                 [
-                    "magenta_0.wav","magenta_1.wav","magenta_2.wav","magenta_3.wav"
+                    "magenta_0.ogg","magenta_1.ogg","magenta_2.ogg","magenta_3.ogg"
                     ],
                 #yellow
                 [
-                    "yellow_0.wav","yellow_1.wav","yellow_2.wav","yellow_3.wav"
+                    "yellow_0.ogg","yellow_1.ogg","yellow_2.ogg","yellow_3.ogg"
                     ]
                 ]
 
@@ -129,7 +129,7 @@ class Spawn():
         self.speed = speed_mods[color_index][min(self.stage,2)]
         self.fading = fading_mods[color_index][min(self.stage,2)]
 
-        mixer.init(44100, 16, 2, 4096)
+        mixer.init()
         self.sound_effect = mixer.Sound(sound_files[color_index][self.stage])
 
         for point in pattern:

@@ -10,6 +10,8 @@ import pygame, argparse, random
 from pygame.locals import *
 from PIL import Image
 import time
+from pygame import mixer
+from threading import Thread
 
 from spawn import Spawn
 
@@ -132,7 +134,15 @@ class LostInSpace(Application):
                         self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
                                             (r, g, b))
                         self.color = self.base_color
-                        spawn.sound_effect.play(-1)
+                        mixer.init()
+                        sound_effect = mixer.Sound('Explosion.ogg')
+                        sound_effect.set_volume(1)
+                        sound_effect.play()
+                        spawn.sound_effect.play()
+                        spawn.sound_effect.fadeout(3000)
+                        #self.loader = Thread(target=spawn.sound_effect.play)
+                        #self.loader.daemon = True
+                        #self.loader.start()
 
                         # remove spawn from list
                         for point in spawn.points:
@@ -196,10 +206,10 @@ class LostInSpace(Application):
 
         while self.state is not 'end':
             self.event()
-            time.sleep(0.25/self.speed)
-        self.image.show()
+            time.sleep(0.18/self.speed)
+        self.image.resize((1000,1000)).show()
         self.model.set_all('black')
-        self.arbalet.user_model.write("Je suis Mondrian", 'blue')
+        #self.arbalet.user_model.write("Je suis Mondrian", 'blue')
 
 
 if __name__ == '__main__':
