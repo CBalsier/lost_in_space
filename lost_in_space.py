@@ -71,8 +71,6 @@ class LostInSpace(Application):
         elif keys[K_LEFT]:
             self.offset_x = (self.offset_x - 1) % size[0]
             action = True
-        elif keys[K_ESCAPE]:
-            self.state = 'end'
         elif keys[K_SPACE]:
             if self.state == 'init':
                 with self.model:
@@ -89,6 +87,9 @@ class LostInSpace(Application):
 
                     self.state = 'running'
                     action = True
+
+        if keys[K_ESCAPE]:
+            self.state = 'end'
 
         if self.state == 'init':
             pass
@@ -120,6 +121,8 @@ class LostInSpace(Application):
                     self.spawns.remove(real_spawn)
                     random.seed()
                     self.spawn_source([random.randint(0,size[0]),random.randint(0,size[1])],parent=real_spawn)
+                    #self.speed = real_spawn.speed
+
                 # else we tranform the current color
                 else:
                     # transforming player color to PIL RGB
@@ -141,7 +144,8 @@ class LostInSpace(Application):
 
 
         if not action:
-            self.speed=max(self.speed-1, MIN_SPEED)
+            pass
+            #self.speed=max(self.speed-1, MIN_SPEED)
 
     def draw_grid(self):
         #drag from image
