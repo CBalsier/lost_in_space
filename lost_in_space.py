@@ -35,11 +35,13 @@ class LostInSpace(Application):
         self.model.set_all('white')
         self.state = 'init'
         self.image = Image.new('RGB',size, (255,255,255))
-        self.source_spots = []
         self.spawns = []
         self.speed = 1
         self.fade = 1
         self.vector = None
+        self.color_level = [0]*6
+        print self.color_level
+        print "State: init"
 
     def find_spawn(self, coord):
         for spawn in self.spawns:
@@ -49,8 +51,6 @@ class LostInSpace(Application):
     def spawn_source(self,position, parent = None, color=None):
         new_spawn=Spawn(size, position, parent,color)
         self.spawns.append(new_spawn)
-        for point in new_spawn.points:
-            self.source_spots.append(point)
 
     def mix_color(self,(r1,g1,b1),(r2,g2,b2)):
         r = (r1+r2)/2
@@ -93,12 +93,14 @@ class LostInSpace(Application):
                     self.spawn_source([self.offset_x + self.x, self.offset_y + self.y - 2], color=3)
                     self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y + 1], color=4)
                     self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y - 1], color=5)
-
+                    print "State: running"
                     self.state = 'running'
                     action = True
 
         if keys[K_ESCAPE]:
             self.state = 'end'
+            print "State end"
+            return
         if not action:
             self.speed = max(self.speed/1.2, MIN_SPEED)
             self.fade = max(self.fade/1.2, 1)
@@ -113,48 +115,52 @@ class LostInSpace(Application):
                     self.offset_x = (self.offset_x + 1) % size[0]
                 action = True
         if self.state == 'init':
-            pass
+            return
             # self.arbalet.user_model.write("Draw me", 'blue')
-
         elif self.state == 'running' and action:
             with self.model:
                 # Changing color
                 brightness = max(rgb_to_hsv(self.color)[1] - 1./self.fade, 0)
                 self.color = hsv_to_rgb(rgb_to_hsv(self.color)[0], brightness, rgb_to_hsv(self.color)[2])
-
+                colide_spawn = None
                 # if we are on a spot
                 x = (self.offset_x + self.x)%size[0]
                 y = (self.offset_y + self.y)%size[1]
                 for spawn in self.spawns:
                     if (x, y) == (spawn.x, spawn.y):
-                        self.base_color = spawn.color
-                        r = int(round(spawn.color[0] * 255))
-                        g = int(round(spawn.color[1] * 255))
-                        b = int(round(spawn.color[2] * 255))
-                        self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
-                                            (r, g, b))
-                        self.color = self.base_color
-                        mixer.init()
-                        sound_effect = mixer.Sound('Explosion.ogg')
-                        sound_effect.set_volume(1)
-                        sound_effect.play()
-                        spawn.sound_effect.play()
-                        spawn.sound_effect.fadeout(3000)
-                        #self.loader = Thread(target=spawn.sound_effect.play)
-                        #self.loader.daemon = True
-                        #self.loader.start()
+                        colide_spawn = spawn
+                if colide_spawn is not None:
+                    spawn = colide_spawn
 
-                        # remove spawn from list
-                        for point in spawn.points:
-                            self.image.putpixel((point[0], point[1]),(r, g, b))
-                            self.source_spots.remove(point)
-                        self.spawns.remove(spawn)
-                        random.seed()
-                        self.spawn_source([random.randint(0,size[0]),random.randint(0,size[1])],parent=spawn)
-                        self.spawn_source([random.randint(0, size[0]), random.randint(0, size[1])])
-                        self.speed = spawn.speed
-                        self.fade = spawn.fading
-                    #print 'speed %d' % self.speed
+                    self.base_color = spawn.color
+                    r = int(round(spawn.color[0] * 255))
+                    g = int(round(spawn.color[1] * 255))
+                    b = int(round(spawn.color[2] * 255))
+                    self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
+                                        (r, g, b))
+                    self.color = self.base_color
+
+                    # play sound
+                    sound = spawn.get_sound(self.color_level[spawn.color_id])
+                    sound.play()
+                    sound.fadeout(3000)
+
+                    # draw spawn
+                    points = spawn.get_points(self.color_level[spawn.color_id], size)
+                    for point in points:
+                        self.image.putpixel((point[0], point[1]),(r, g, b))
+                    self.spawns.remove(spawn)
+
+                    # generate two new spawn
+                    random.seed()
+                    self.spawn_source([random.randint(0,size[0]),random.randint(0,size[1])],parent=spawn)
+                    self.spawn_source([random.randint(0, size[0]), random.randint(0, size[1])])
+
+                    # get information about speed and fading
+                    self.speed = spawn.get_speed(self.color_level[spawn.color_id])
+                    self.fade = spawn.get_fading(self.color_level[spawn.color_id])
+
+                    self.color_level[spawn.color_id] = min(self.color_level[spawn.color_id]+1, 3)
 
                 # else we tranform the current color
                 else:
@@ -163,7 +169,7 @@ class LostInSpace(Application):
                     g = int(round(self.color[1] * 255))
                     b = int(round(self.color[2] * 255))
 
-                    # we do not print on the image if we are black ou white
+                    # we only print on the image if we still have color
                     if not (rgb_to_hsv(self.color)[0] == 0.):
                         actual_color = self.image.getpixel(
                             ((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]))
@@ -173,6 +179,9 @@ class LostInSpace(Application):
                                             (r, g, b))
                     else:
                         self.color=(1.0, 1.0, 1.0)
+                        for i in range(len(self.color_level)):
+                            self.color_level[i] = 0
+                        self.speed = max(self.speed / 1.2, MIN_SPEED)
 
         # finaly, we draw the grid
         self.draw_grid()
@@ -189,16 +198,12 @@ class LostInSpace(Application):
                 b = c[2]/255.
                 self.model.set_pixel(j, i, [r, g ,b])
         # draw spawn
-        for spawn in self.source_spots:
-
-            #if abs(spawn[0] - (self.offset_x + self.x)%size[0]) <= self.model.width/2 and abs(spawn[1] - (self.offset_y + self.y)%size[1]) <= self.model.height/2:
-            for real_spawn in self.spawns:
-                try:
-                    if real_spawn.blink:
-                        self.model.set_pixel((real_spawn.y-self.offset_y+size[1])%size[1],(real_spawn.x-self.offset_x+size[0])%size[0],real_spawn.color)
-                    real_spawn.blink = not real_spawn.blink
-                except:
-                    pass
+        #if abs(spawn[0] - (self.offset_x + self.x)%size[0]) <= self.model.width/2 and abs(spawn[1] - (self.offset_y + self.y)%size[1]) <= self.model.height/2:
+        for spawn in self.spawns:
+            try:
+                self.model.set_pixel((spawn.y-self.offset_y+size[1])%size[1],(spawn.x-self.offset_x+size[0])%size[0],spawn.color)
+            except:
+                pass
         if self.color == (1.0, 1.0, 1.0):
             self.model.set_pixel(self.y, self.x, 'black')
 
@@ -211,7 +216,7 @@ class LostInSpace(Application):
             time.sleep(0.18/self.speed)
         self.image.resize((1000,1000)).show()
         self.model.set_all('black')
-        #self.arbalet.user_model.write("Je suis Mondrian", 'blue')
+        #self.arbalet.user_model.write("Digital Art Jam", 'blue')
 
 
 if __name__ == '__main__':
