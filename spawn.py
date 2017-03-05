@@ -128,7 +128,14 @@ DEFAULT_COLORS = [
 #DEFAULT_COLORS = [[0.83921,0.22745,0.17647],[0,0.64705,0.37254],[0,0.04705,0.38823],[0,0.61176,0.61176],[0.76470,0,0.21960],[0.96470,0.90588,0.11764]]
 # RGBCMY (old version)
 
-
+DRAWING_COLORS = [
+        [1., 0.,0.],
+        [0.,1.,0.],
+        [0.,0.,1.],
+        [0.,1.,1.],
+        [1.,0.,1.],
+        [1.,1.,0.]
+        ]
 class Spawn():
     def __init__(self,img_size, position,parent=None, color = None):
         self.x = position[0]
@@ -137,12 +144,14 @@ class Spawn():
         if parent is None:
             self.color_id = color if color is not None else randint(0,len(DEFAULT_COLORS)-1)
             self.color = DEFAULT_COLORS[self.color_id]
+            self.draw_color = DRAWING_COLORS[self.color_id]
         else:
             self.color_id = color if color is not None else parent.color_id
             self.color = DEFAULT_COLORS[self.color_id]
+            self.draw_color = DRAWING_COLORS[self.color_id]
 
     def get_points(self, level, img_size):
-        print self.color_id
+        #print self.color_id
         ret = []
         for point in PATTERNS[self.color_id][level]:
             ret.append([(self.x + point[0] + img_size[0])%img_size[0],

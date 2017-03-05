@@ -154,7 +154,7 @@ class LostInSpace(Application):
                     self.spawn_source([random.randint(0, size[0]-1), random.randint(0, size[1]-1)])
                     
                     # delete two old spawns if too many spawns
-                    print len(self.spawns), MAX_SPAWNS
+                    #print len(self.spawns), MAX_SPAWNS
                     if len(self.spawns)>=MAX_SPAWNS:
                         spawns_to_remove = 2
                         indices_to_remove = []
@@ -172,11 +172,11 @@ class LostInSpace(Application):
                                 if not tmp_index in indices_to_remove :
                                     indices_to_remove.append(tmp_index)
                                 spawns_to_remove -=1
-                            print indices_to_remove
+                            #print indices_to_remove
                         for index in indices_to_remove:
                             self.spawns.remove(self.spawns[index])
                         indices_to_remove = []
-                        print len(self.spawns)
+                        #print len(self.spawns)
                     # get information about speed and fading
                     self.speed = spawn.get_speed(self.color_level[spawn.color_id])
                     self.fade = spawn.get_fading(self.color_level[spawn.color_id])
@@ -198,18 +198,19 @@ class LostInSpace(Application):
                             r, g, b = self.mix_color((r, g, b), (actual_color[0], actual_color[1], actual_color[2]))
                         self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
                                             (r, g, b))
-                    # diffusion on the sides with bluuuueee !   
-                        if self.last_spawn_color == [0.047058823529411764, 0.14901960784313725,0.7019607843137254]:
+                    # random diffusion on the sides with bluuuueee !   
+                        if self.last_spawn_color == [0.047058823529411764,
+                                0.14901960784313725,0.7019607843137254] and self.color_level[2]==3:
                             # blue is hard-coded
                             #print "fuuuuuusioooon"
-                            tmp_brightness = max(rgb_to_hsv(self.color)[1] -5./self.fade, 0)
+                            tmp_brightness = max(rgb_to_hsv(self.color)[1] -random.randint(1.,8.)/self.fade, 0)
                             tmp_color = hsv_to_rgb(rgb_to_hsv(self.color)[0], tmp_brightness, rgb_to_hsv(self.color)[2])
-
-
+    
                             r = int(round(tmp_color[0] * 255))
                             g = int(round(tmp_color[1] * 255))
                             b = int(round(tmp_color[2] * 255))
 
+                            # uncomment to smoothen the sides of the blue track    
                             #r, g, b = self.mix_color((r, g, b), (actual_color[0], actual_color[1], actual_color[2]))
 
                             if self.vector ==  'up':
@@ -240,6 +241,16 @@ class LostInSpace(Application):
                                 self.image.putpixel(((self.offset_x + self.x-1) % size[0],
                                     (self.offset_y + self.y-1) % size[1]),
                                             (r, g, b))
+                         if self.last_spawn_color == [0.06666666666666667, 0.6470588235294118,
+                                 0.2784313725490196] and self.color_level[1]==1:
+                            tmp_brightness = max(rgb_to_hsv(self.color)[1] -1./self.fade, 0)
+                            tmp_color = hsv_to_rgb(rgb_to_hsv(self.color)[0], tmp_brightness, rgb_to_hsv(self.color)[2])
+    
+                            r = int(round(tmp_color[0] * 255))
+                            g = int(round(tmp_color[1] * 255))
+                            b = int(round(tmp_color[2] * 255))
+
+
 
                     else:
                         self.color=(1.0, 1.0, 1.0)
