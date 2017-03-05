@@ -10,14 +10,15 @@ import pygame, argparse, random
 from pygame.locals import *
 from PIL import Image
 import time
-
+from numpy import floor
 from spawn import Spawn
 
 #size must be greater than the table size
 size = 25,25
 MAX_SPEED = 3
 MIN_SPEED = 1
-
+MAX_SPAWNS = size[0]*size[1]/10
+#MAX_SPAWNS = 25 # for testing purposes
 
 class LostInSpace(Application):
     def __init__(self, argparser):
@@ -148,9 +149,34 @@ class LostInSpace(Application):
 
                     # generate two new spawns
                     random.seed()
-                    self.spawn_source([random.randint(0,size[0]-1),random.randint(0,size[1]-1)],parent=spawn)
+                    self.spawn_source([random.randint(floor(self.x-self.width/2)+1,floor(self.x+self.width/2)-1),
+                        random.randint(floor(self.y-self.height/2)+1,floor(self.y + self.height/2)-1)],parent=spawn)
                     self.spawn_source([random.randint(0, size[0]-1), random.randint(0, size[1]-1)])
-
+                    
+                    # delete two old spawns if too many spawns
+                    print len(self.spawns), MAX_SPAWNS
+                    if len(self.spawns)>=MAX_SPAWNS:
+                        spawns_to_remove = 2
+                        indices_to_remove = []
+                        iterations = 0
+                        while(len(indices_to_remove) <2 and iterations<MAX_SPAWNS):
+                            tmp_index = random.randint(0,floor(MAX_SPAWNS/2))
+                            iterations += 1
+                            tmp_spawn = self.spawns[tmp_index]
+                            #print iterations, tmp_index, tmp_spawn
+                            #print tmp_spawn.x, tmp_spawn.y, self.x, self.y, self.width, self.height
+                            if (tmp_spawn.x<=(self.x-self.width/2) or tmp_spawn.x>=(self.x +
+                                self.width/2) or tmp_spawn.y <= (self.y - self.height/2) or
+                                tmp_spawn.y >= (self.y + self.height/2)):
+                                #self.spawns.remove(tmp_index)
+                                if not tmp_index in indices_to_remove :
+                                    indices_to_remove.append(tmp_index)
+                                spawns_to_remove -=1
+                            print indices_to_remove
+                        for index in indices_to_remove:
+                            self.spawns.remove(self.spawns[index])
+                        indices_to_remove = []
+                        print len(self.spawns)
                     # get information about speed and fading
                     self.speed = spawn.get_speed(self.color_level[spawn.color_id])
                     self.fade = spawn.get_fading(self.color_level[spawn.color_id])
@@ -238,14 +264,13 @@ class LostInSpace(Application):
         # draw spawn, QLE style
         for spawn in self.spawns:
             try:
-                self.model.set_pixel((spawn.y-self.offset_y+size[1])%size[1],(spawn.x-self.offset_x+size[0])%size[0],spawn.color)
+                self.model.set_pixel((spawn.y-self.offset_y+size[1])%size[1],(spawn.x-self.offset_x+size[0])%size[0],spawn.draw_color)
             except:
                 pass
         if self.color == (1.0, 1.0, 1.0):
             self.model.set_pixel(self.y, self.x, 'black')
 
     def run(self):
-        self.arbalet.user_model.write("Digital Art Jam", 'blue')
         while self.state is not 'end':
             self.event()
             time.sleep(0.15/self.speed)
