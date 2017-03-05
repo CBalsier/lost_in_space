@@ -10,8 +10,6 @@ import pygame, argparse, random
 from pygame.locals import *
 from PIL import Image
 import time
-from pygame import mixer
-from threading import Thread
 
 from spawn import Spawn
 
@@ -41,8 +39,6 @@ class LostInSpace(Application):
         self.vector = None
         self.color_level = [0]*6
         self.last_spawn_color = 0
-        print self.color_level
-        print "State: init"
 
     def find_spawn(self, coord):
         for spawn in self.spawns:
@@ -94,13 +90,11 @@ class LostInSpace(Application):
                     self.spawn_source([self.offset_x + self.x, self.offset_y + self.y - 2], color=3)
                     self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y + 1], color=4)
                     self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y - 1], color=5)
-                    print "State: running"
                     self.state = 'running'
                     action = True
 
         if keys[K_ESCAPE]:
             self.state = 'end'
-            print "State end"
             return
         if not action:
             self.speed = max(self.speed/1.2, MIN_SPEED)
@@ -117,7 +111,6 @@ class LostInSpace(Application):
                 action = True
         if self.state == 'init':
             return
-            # self.arbalet.user_model.write("Draw me", 'blue')
         elif self.state == 'running' and action:
             with self.model:
                 # Changing color
@@ -155,8 +148,8 @@ class LostInSpace(Application):
 
                     # generate two new spawns
                     random.seed()
-                    self.spawn_source([random.randint(0,size[0]),random.randint(0,size[1])],parent=spawn)
-                    self.spawn_source([random.randint(0, size[0]), random.randint(0, size[1])])
+                    self.spawn_source([random.randint(0,size[0]-1),random.randint(0,size[1]-1)],parent=spawn)
+                    self.spawn_source([random.randint(0, size[0]-1), random.randint(0, size[1]-1)])
 
                     # get information about speed and fading
                     self.speed = spawn.get_speed(self.color_level[spawn.color_id])
@@ -241,8 +234,7 @@ class LostInSpace(Application):
                 g = c[1]/255.
                 b = c[2]/255.
                 self.model.set_pixel(j, i, [r, g ,b])
-        # draw spawn
-        #if abs(spawn[0] - (self.offset_x + self.x)%size[0]) <= self.model.width/2 and abs(spawn[1] - (self.offset_y + self.y)%size[1]) <= self.model.height/2:
+        # draw spawn, QLE style
         for spawn in self.spawns:
             try:
                 self.model.set_pixel((spawn.y-self.offset_y+size[1])%size[1],(spawn.x-self.offset_x+size[0])%size[0],spawn.color)
@@ -252,16 +244,13 @@ class LostInSpace(Application):
             self.model.set_pixel(self.y, self.x, 'black')
 
     def run(self):
-        # Update the screen every second.
-        rate = Rate(1000.0)
-
+        self.arbalet.user_model.write("Digital Art Jam", 'blue')
         while self.state is not 'end':
             self.event()
             time.sleep(0.18/self.speed)
         self.image.resize((1000,1000)).show()
         self.model.set_all('black')
         #self.arbalet.user_model.write("Digital Art Jam", 'blue')
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Do something :D')
