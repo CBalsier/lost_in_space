@@ -173,7 +173,8 @@ class LostInSpace(Application):
                         self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
                                             (r, g, b))
                     # diffusion on the sides with bluuuueee !   
-                        if self.last_spawn_color == [0, 0.04705, 0.38823]: # blue is hard-coded
+                        if self.last_spawn_color == [0.047058823529411764, 0.14901960784313725,0.7019607843137254]:
+                            # blue is hard-coded
                             #print "fuuuuuusioooon"
                             tmp_brightness = max(rgb_to_hsv(self.color)[1] -5./self.fade, 0)
                             tmp_color = hsv_to_rgb(rgb_to_hsv(self.color)[0], tmp_brightness, rgb_to_hsv(self.color)[2])
@@ -247,7 +248,7 @@ class LostInSpace(Application):
         self.arbalet.user_model.write("Digital Art Jam", 'blue')
         while self.state is not 'end':
             self.event()
-            time.sleep(0.18/self.speed)
+            time.sleep(0.15/self.speed)
         self.image.resize((1000,1000)).show()
         self.model.set_all('black')
         #self.arbalet.user_model.write("Digital Art Jam", 'blue')
