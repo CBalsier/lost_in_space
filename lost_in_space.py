@@ -40,6 +40,7 @@ class LostInSpace(Application):
         self.fade = 1
         self.vector = None
         self.color_level = [0]*6
+        self.last_spawn_color = 0
         print self.color_level
         print "State: init"
 
@@ -122,16 +123,17 @@ class LostInSpace(Application):
                 # Changing color
                 brightness = max(rgb_to_hsv(self.color)[1] - 1./self.fade, 0)
                 self.color = hsv_to_rgb(rgb_to_hsv(self.color)[0], brightness, rgb_to_hsv(self.color)[2])
-                colide_spawn = None
+                collide_spawn = None
                 # if we are on a spot
                 x = (self.offset_x + self.x)%size[0]
                 y = (self.offset_y + self.y)%size[1]
                 for spawn in self.spawns:
                     if (x, y) == (spawn.x, spawn.y):
-                        colide_spawn = spawn
-                if colide_spawn is not None:
-                    spawn = colide_spawn
-
+                        collide_spawn = spawn
+                if collide_spawn is not None:
+                    spawn = collide_spawn
+                    self.last_spawn_color = spawn.color
+                    #print self.last_spawn_color
                     self.base_color = spawn.color
                     r = int(round(spawn.color[0] * 255))
                     g = int(round(spawn.color[1] * 255))
@@ -151,7 +153,7 @@ class LostInSpace(Application):
                         self.image.putpixel((point[0], point[1]),(r, g, b))
                     self.spawns.remove(spawn)
 
-                    # generate two new spawn
+                    # generate two new spawns
                     random.seed()
                     self.spawn_source([random.randint(0,size[0]),random.randint(0,size[1])],parent=spawn)
                     self.spawn_source([random.randint(0, size[0]), random.randint(0, size[1])])
@@ -177,6 +179,48 @@ class LostInSpace(Application):
                             r, g, b = self.mix_color((r, g, b), (actual_color[0], actual_color[1], actual_color[2]))
                         self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
                                             (r, g, b))
+                    # diffusion on the sides with bluuuueee !   
+                        if self.last_spawn_color == [0, 0.04705, 0.38823]: # blue is hard-coded
+                            #print "fuuuuuusioooon"
+                            tmp_brightness = max(rgb_to_hsv(self.color)[1] -5./self.fade, 0)
+                            tmp_color = hsv_to_rgb(rgb_to_hsv(self.color)[0], tmp_brightness, rgb_to_hsv(self.color)[2])
+
+
+                            r = int(round(tmp_color[0] * 255))
+                            g = int(round(tmp_color[1] * 255))
+                            b = int(round(tmp_color[2] * 255))
+
+                            #r, g, b = self.mix_color((r, g, b), (actual_color[0], actual_color[1], actual_color[2]))
+
+                            if self.vector ==  'up':
+                                self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                                self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                            elif self.vector == 'down':
+                                self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+                                self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+                            elif self.vector == 'left':
+                                self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                                self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+                            elif self.vector == 'right':
+                                self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                                self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+
                     else:
                         self.color=(1.0, 1.0, 1.0)
                         for i in range(len(self.color_level)):
