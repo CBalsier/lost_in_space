@@ -241,9 +241,9 @@ class LostInSpace(Application):
                                 self.image.putpixel(((self.offset_x + self.x-1) % size[0],
                                     (self.offset_y + self.y-1) % size[1]),
                                             (r, g, b))
-                         if self.last_spawn_color == [0.06666666666666667, 0.6470588235294118,
-                                 0.2784313725490196] and self.color_level[1]==1:
-                            tmp_brightness = max(rgb_to_hsv(self.color)[1] -1./self.fade, 0)
+                        if self.last_spawn_color == [0.06666666666666667, 0.6470588235294118,
+                                0.2784313725490196] and self.color_level[1] == 3 : # testing purposes
+                            tmp_brightness = max(rgb_to_hsv(self.color)[1] - 1./self.fade, 0)
                             tmp_color = hsv_to_rgb(rgb_to_hsv(self.color)[0], tmp_brightness, rgb_to_hsv(self.color)[2])
     
                             r = int(round(tmp_color[0] * 255))
@@ -251,6 +251,42 @@ class LostInSpace(Application):
                             b = int(round(tmp_color[2] * 255))
 
 
+                            if self.vector ==  'up':
+                                if ((self.y + self.offset_y)%2 == 0):
+                                    self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                                else:
+                                    self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                            elif self.vector == 'down':
+                                if ((self.y + self.offset_y)%2 == 0):
+                                    self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+                                else :
+                                    self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+                            elif self.vector == 'left':
+                                if ((self.x + self.offset_x)%2 == 0):
+                                    self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                                else :
+                                    self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+                            elif self.vector == 'right':
+                                if ((self.x + self.offset_x)%2 ==0):
+                                    self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                                else :
+                                    self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
 
                     else:
                         self.color=(1.0, 1.0, 1.0)
