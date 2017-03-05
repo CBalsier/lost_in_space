@@ -4,6 +4,8 @@
 Digital Art Jam
 """
 
+
+from time import gmtime, strftime
 from arbalet.core import Application, Rate
 from arbalet.colors import hsv_to_rgb, rgb_to_hsv
 import pygame, argparse, random
@@ -241,15 +243,14 @@ class LostInSpace(Application):
                                 self.image.putpixel(((self.offset_x + self.x-1) % size[0],
                                     (self.offset_y + self.y-1) % size[1]),
                                             (r, g, b))
-                        if self.last_spawn_color == [0.06666666666666667, 0.6470588235294118,
-                                0.2784313725490196] and self.color_level[1] == 3 : # testing purposes
-                            tmp_brightness = max(rgb_to_hsv(self.color)[1] - 1./self.fade, 0)
-                            tmp_color = hsv_to_rgb(rgb_to_hsv(self.color)[0], tmp_brightness, rgb_to_hsv(self.color)[2])
-    
-                            r = int(round(tmp_color[0] * 255))
-                            g = int(round(tmp_color[1] * 255))
-                            b = int(round(tmp_color[2] * 255))
+                            if self.last_spawn_color == [0.06666666666666667, 0.6470588235294118,
+                             0.2784313725490196] and self.color_level[1]==1:
+                                tmp_brightness = max(rgb_to_hsv(self.color)[1] -1./self.fade, 0)
+                                tmp_color = hsv_to_rgb(rgb_to_hsv(self.color)[0], tmp_brightness, rgb_to_hsv(self.color)[2])
 
+                                r = int(round(tmp_color[0] * 255))
+                                g = int(round(tmp_color[1] * 255))
+                                b = int(round(tmp_color[2] * 255))
 
                             if self.vector ==  'up':
                                 if ((self.y + self.offset_y)%2 == 0):
@@ -321,9 +322,9 @@ class LostInSpace(Application):
         while self.state is not 'end':
             self.event()
             time.sleep(0.15/self.speed)
-        self.image.resize((1000,1000)).show()
-        self.model.set_all('black')
-        #self.arbalet.user_model.write("Digital Art Jam", 'blue')
+        image = self.image.resize((1000,1000))
+        image.show()
+        image.save(strftime("%Y-%m-%d %H.%M.%S", gmtime()) + '.bmp')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Do something :D')
