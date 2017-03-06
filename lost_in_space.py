@@ -324,6 +324,7 @@ class LostInSpace(Application):
             time.sleep(0.15/self.speed)
         image = self.image.resize((1000,1000))
         image.show()
+        image.save('output/' +strftime("%Y-%m-%d %H.%M.%S", gmtime()) + '.bmp')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Do something :D')
