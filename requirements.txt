@@ -1,0 +1,6 @@
+numpy
+pygame
+pyserial
+zmq
+configparser
+pillow

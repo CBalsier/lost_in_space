@@ -166,4 +166,4 @@ class Spawn():
 
     def get_sound(self, level):
         mixer.init()
-        return mixer.Sound(SOUND_FILES[self.color_id][level])
+        return mixer.Sound('music/'+SOUND_FILES[self.color_id][level])
