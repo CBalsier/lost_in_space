@@ -42,6 +42,7 @@ class LostInSpace(Application):
         self.vector = None
         self.color_level = [0]*6
         self.last_spawn_color = 0
+        self.invader = True
 
     def find_spawn(self, coord):
         for spawn in self.spawns:
@@ -49,7 +50,7 @@ class LostInSpace(Application):
                 return spawn
 
     def spawn_source(self,position, parent = None, color=None):
-        new_spawn=Spawn(size, position, parent,color)
+        new_spawn=Spawn(size, position, parent,color, self.invader)
         self.spawns.append(new_spawn)
 
     def mix_color(self,(r1,g1,b1),(r2,g2,b2)):
