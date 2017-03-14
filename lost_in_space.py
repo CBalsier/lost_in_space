@@ -328,4 +328,6 @@ class LostInSpace(Application):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Do something :D')
+    parser.add_argument('-i', '--input', default='keyboard', choices=['keyboard','joystick'], help='Input method (default: keyboard)')
+    parser.add_argument('--invader', action='store_true', help='Super Space Invader mod (default: disabled)')
     LostInSpace(parser).start()
