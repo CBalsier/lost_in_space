@@ -42,7 +42,9 @@ class LostInSpace(Application):
         self.vector = None
         self.color_level = [0]*6
         self.last_spawn_color = 0
-        self.invader = True
+        # Treating arguments
+        parser = argparser.parse_args()
+        self.invader = parser.invader
 
     def find_spawn(self, coord):
         for spawn in self.spawns:
