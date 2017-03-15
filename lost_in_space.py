@@ -45,7 +45,8 @@ class LostInSpace(Application):
         # Treating arguments
         parser = argparser.parse_args()
         self.invader = parser.invader
-
+        self.ai = parser.auto
+    
     def find_spawn(self, coord):
         for spawn in self.spawns:
             if coord in spawn.points:
@@ -65,241 +66,236 @@ class LostInSpace(Application):
         action = False
         pygame.event.pump()
         keys = pygame.key.get_pressed()
-        if keys[K_UP]:
-            self.offset_y = (self.offset_y - 1) % size[1]
-            self.vector = 'up'
-            action = True
-        elif keys[K_DOWN]:
-            self.offset_y = (self.offset_y + 1) % size[1]
-            self.vector = 'down'
-            action = True
-        elif keys[K_RIGHT]:
-            self.offset_x = (self.offset_x + 1) % size[0]
-            self.vector = 'right'
-            action = True
-        elif keys[K_LEFT]:
-            self.offset_x = (self.offset_x - 1) % size[0]
-            self.vector = 'left'
-            action = True
-        elif keys[K_SPACE]:
-            if self.state == 'init':
-                with self.model:
-                    # set initial color
-                    self.model.set_pixel(self.y, self.x, (1.0,1.0,1.0))
-                    self.color = self.model.get_pixel(self.y, self.x)
-                    self.base_color = self.color
-
-                    # spawn first stop near the player
-                    self.spawn_source([self.offset_x + self.x, self.offset_y + self.y + 2], color=0)
-                    self.spawn_source([self.offset_x + self.x - 2, self.offset_y + self.y + 1], color=1)
-                    self.spawn_source([self.offset_x + self.x - 2, self.offset_y + self.y - 1], color=2)
-                    self.spawn_source([self.offset_x + self.x, self.offset_y + self.y - 2], color=3)
-                    self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y + 1], color=4)
-                    self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y - 1], color=5)
-                    self.state = 'running'
-                    action = True
-
-        if keys[K_ESCAPE]:
-            self.state = 'end'
-            return
-        if not action:
-            self.speed = max(self.speed/1.2, MIN_SPEED)
-            self.fade = max(self.fade/1.2, 1)
-            if self.speed!=MIN_SPEED:
-                if self.vector=='up':
-                    self.offset_y = (self.offset_y - 1) % size[1]
-                elif self.vector=='down':
-                    self.offset_y = (self.offset_y + 1) % size[1]
-                elif self.vector=='left':
-                    self.offset_x = (self.offset_x - 1) % size[0]
-                elif self.vector=='right':
-                    self.offset_x = (self.offset_x + 1) % size[0]
+        
+        if(self.ai):
+            dir_list = ['up', 'down', 'left', 'right']
+            direction = dir_list[random.randint(0,len(dir_list)-1)]
+            steps = random.randint(0,10)
+        else:
+            direction =''
+            steps = 1
+        for it in range(steps):
+            #time.sleep(0.05)
+            #print direction, it, steps
+            if keys[K_UP] or direction == 'up':
+                self.offset_y = (self.offset_y - 1) % size[1]
+                self.vector = 'up'
                 action = True
-        if self.state == 'init':
-            return
-        elif self.state == 'running' and action:
-            with self.model:
-                # Changing color
-                brightness = max(rgb_to_hsv(self.color)[1] - 1./self.fade, 0)
-                self.color = hsv_to_rgb(rgb_to_hsv(self.color)[0], brightness, rgb_to_hsv(self.color)[2])
-                collide_spawn = None
-                # if we are on a spot
-                x = (self.offset_x + self.x)%size[0]
-                y = (self.offset_y + self.y)%size[1]
-                for spawn in self.spawns:
-                    if (x, y) == (spawn.x, spawn.y):
-                        collide_spawn = spawn
-                if collide_spawn is not None:
-                    spawn = collide_spawn
-                    self.last_spawn_color = spawn.color
-                    #print self.last_spawn_color
-                    self.base_color = spawn.color
-                    r = int(round(spawn.color[0] * 255))
-                    g = int(round(spawn.color[1] * 255))
-                    b = int(round(spawn.color[2] * 255))
-                    self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
-                                        (r, g, b))
-                    self.color = self.base_color
-
-                    # play sound
-                    sound = spawn.get_sound(self.color_level[spawn.color_id])
-                    sound.play()
-                    sound.fadeout(3000)
-
-                    # draw spawn
-                    points = spawn.get_points(self.color_level[spawn.color_id], size)
-                    for point in points:
-                        self.image.putpixel((point[0], point[1]),(r, g, b))
-                    self.spawns.remove(spawn)
-
-                    # generate two new spawns
-                    random.seed()
-                    self.spawn_source([random.randint(floor(self.x-self.width/2)+1,floor(self.x+self.width/2)-1),
-                        random.randint(floor(self.y-self.height/2)+1,floor(self.y + self.height/2)-1)],parent=spawn)
-                    self.spawn_source([random.randint(0, size[0]-1), random.randint(0, size[1]-1)])
-                    
-                    # delete two old spawns if too many spawns
-                    #print len(self.spawns), MAX_SPAWNS
-                    if len(self.spawns)>=MAX_SPAWNS:
-                        spawns_to_remove = 2
-                        indices_to_remove = []
-                        iterations = 0
-                        while(len(indices_to_remove) <2 and iterations<MAX_SPAWNS):
-                            tmp_index = random.randint(0,floor(MAX_SPAWNS/2))
-                            iterations += 1
-                            tmp_spawn = self.spawns[tmp_index]
-                            #print iterations, tmp_index, tmp_spawn
-                            #print tmp_spawn.x, tmp_spawn.y, self.x, self.y, self.width, self.height
-                            if (tmp_spawn.x<=(self.x-self.width/2) or tmp_spawn.x>=(self.x +
-                                self.width/2) or tmp_spawn.y <= (self.y - self.height/2) or
-                                tmp_spawn.y >= (self.y + self.height/2)):
-                                #self.spawns.remove(tmp_index)
-                                if not tmp_index in indices_to_remove :
-                                    indices_to_remove.append(tmp_index)
-                                spawns_to_remove -=1
-                            #print indices_to_remove
-                        for index in indices_to_remove:
-                            self.spawns.remove(self.spawns[index])
-                        indices_to_remove = []
-                        #print len(self.spawns)
-                    # get information about speed and fading
-                    self.speed = spawn.get_speed(self.color_level[spawn.color_id])
-                    self.fade = spawn.get_fading(self.color_level[spawn.color_id])
-
-                    self.color_level[spawn.color_id] = min(self.color_level[spawn.color_id]+1, 3)
-
-                # else we tranform the current color
-                else:
-                    # transforming player color to PIL RGB
-                    r = int(round(self.color[0] * 255))
-                    g = int(round(self.color[1] * 255))
-                    b = int(round(self.color[2] * 255))
-
-                    # we only print on the image if we still have color
-                    if not (rgb_to_hsv(self.color)[0] == 0.):
-                        actual_color = self.image.getpixel(
-                            ((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]))
-                        if actual_color != (255, 255, 255):
-                            r, g, b = self.mix_color((r, g, b), (actual_color[0], actual_color[1], actual_color[2]))
+            elif keys[K_DOWN] or direction == 'down':
+                self.offset_y = (self.offset_y + 1) % size[1]
+                self.vector = 'down'
+                action = True
+            elif keys[K_RIGHT] or direction == 'right':
+                self.offset_x = (self.offset_x + 1) % size[0]
+                self.vector = 'right'
+                action = True
+            elif keys[K_LEFT] or direction == 'left':
+                self.offset_x = (self.offset_x - 1) % size[0]
+                self.vector = 'left'
+                action = True
+            elif keys[K_SPACE]:
+                if self.state == 'init':
+                    self.first_spawns()    
+                    action = True
+            if keys[K_ESCAPE]:
+                self.state = 'end'
+                return
+            if not action:
+                self.speed = max(self.speed/1.2, MIN_SPEED)
+                self.fade = max(self.fade/1.2, 1)
+                if self.speed!=MIN_SPEED:
+                    if self.vector=='up':
+                        self.offset_y = (self.offset_y - 1) % size[1]
+                    elif self.vector=='down':
+                        self.offset_y = (self.offset_y + 1) % size[1]
+                    elif self.vector=='left':
+                        self.offset_x = (self.offset_x - 1) % size[0]
+                    elif self.vector=='right':
+                        self.offset_x = (self.offset_x + 1) % size[0]
+                    action = True
+            if self.state == 'init':
+                return
+            elif self.state == 'running' and action:
+                with self.model:
+                    # Changing color
+                    brightness = max(rgb_to_hsv(self.color)[1] - 1./self.fade, 0)
+                    self.color = hsv_to_rgb(rgb_to_hsv(self.color)[0], brightness, rgb_to_hsv(self.color)[2])
+                    collide_spawn = None
+                    # if we are on a spot
+                    x = (self.offset_x + self.x)%size[0]
+                    y = (self.offset_y + self.y)%size[1]
+                    for spawn in self.spawns:
+                        if (x, y) == (spawn.x, spawn.y):
+                            collide_spawn = spawn
+                    if collide_spawn is not None:
+                        spawn = collide_spawn
+                        self.last_spawn_color = spawn.color
+                        #print self.last_spawn_color
+                        self.base_color = spawn.color
+                        r = int(round(spawn.color[0] * 255))
+                        g = int(round(spawn.color[1] * 255))
+                        b = int(round(spawn.color[2] * 255))
                         self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
                                             (r, g, b))
-                    # random diffusion on the sides with bluuuueee !   
-                        if self.last_spawn_color == [0.047058823529411764,
-                                0.14901960784313725,0.7019607843137254] and self.color_level[2]==3:
-                            # blue is hard-coded
-                            #print "fuuuuuusioooon"
-                            tmp_brightness = max(rgb_to_hsv(self.color)[1] -random.randint(1.,8.)/self.fade, 0)
-                            tmp_color = hsv_to_rgb(rgb_to_hsv(self.color)[0], tmp_brightness, rgb_to_hsv(self.color)[2])
-    
-                            r = int(round(tmp_color[0] * 255))
-                            g = int(round(tmp_color[1] * 255))
-                            b = int(round(tmp_color[2] * 255))
+                        self.color = self.base_color
 
-                            # uncomment to smoothen the sides of the blue track    
-                            #r, g, b = self.mix_color((r, g, b), (actual_color[0], actual_color[1], actual_color[2]))
+                        # play sound
+                        sound = spawn.get_sound(self.color_level[spawn.color_id])
+                        sound.play()
+                        sound.fadeout(3000)
 
-                            if self.vector ==  'up':
-                                self.image.putpixel(((self.offset_x + self.x+1) % size[0],
-                                    (self.offset_y + self.y+1) % size[1]),
+                        # draw spawn
+                        points = spawn.get_points(self.color_level[spawn.color_id], size)
+                        for point in points:
+                            self.image.putpixel((point[0], point[1]),(r, g, b))
+                        self.spawns.remove(spawn)
+
+                        # generate two new spawns
+                        random.seed()
+                        self.spawn_source([random.randint(floor(self.x-self.width/2)+1,floor(self.x+self.width/2)-1),
+                            random.randint(floor(self.y-self.height/2)+1,floor(self.y + self.height/2)-1)],parent=spawn)
+                        self.spawn_source([random.randint(0, size[0]-1), random.randint(0, size[1]-1)])
+                    
+                        # delete two old spawns if too many spawns
+                        #print len(self.spawns), MAX_SPAWNS
+                        if len(self.spawns)>=MAX_SPAWNS:
+                            spawns_to_remove = 2
+                            indices_to_remove = []
+                            iterations = 0
+                            while(len(indices_to_remove) <2 and iterations<MAX_SPAWNS):
+                                tmp_index = random.randint(0,floor(MAX_SPAWNS/2))
+                                iterations += 1
+                                tmp_spawn = self.spawns[tmp_index]
+                                if (tmp_spawn.x<=(self.x-self.width/2) or tmp_spawn.x>=(self.x +
+                                    self.width/2) or tmp_spawn.y <= (self.y - self.height/2) or
+                                    tmp_spawn.y >= (self.y + self.height/2)):
+                                    #self.spawns.remove(tmp_index)
+                                    if not tmp_index in indices_to_remove :
+                                        indices_to_remove.append(tmp_index)
+                                    spawns_to_remove -=1
+                                #print indices_to_remove
+                            for index in indices_to_remove:
+                                self.spawns.remove(self.spawns[index])
+                            indices_to_remove = []
+                            #print len(self.spawns)
+                        # get information about speed and fading
+                        self.speed = spawn.get_speed(self.color_level[spawn.color_id])
+                        self.fade = spawn.get_fading(self.color_level[spawn.color_id])
+
+                        self.color_level[spawn.color_id] = min(self.color_level[spawn.color_id]+1, 3)
+
+                    # else we tranform the current color
+                    else:
+                        # transforming player color to PIL RGB
+                        r = int(round(self.color[0] * 255))
+                        g = int(round(self.color[1] * 255))
+                        b = int(round(self.color[2] * 255))
+
+                        # we only print on the image if we still have color
+                        if not (rgb_to_hsv(self.color)[0] == 0.):
+                            actual_color = self.image.getpixel(
+                                ((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]))
+                            if actual_color != (255, 255, 255):
+                                r, g, b = self.mix_color((r, g, b), (actual_color[0], actual_color[1], actual_color[2]))
+                            self.image.putpixel(((self.offset_x + self.x) % size[0], (self.offset_y + self.y) % size[1]),
                                             (r, g, b))
-                                self.image.putpixel(((self.offset_x + self.x-1) % size[0],
-                                    (self.offset_y + self.y+1) % size[1]),
-                                            (r, g, b))
-                            elif self.vector == 'down':
-                                self.image.putpixel(((self.offset_x + self.x+1) % size[0],
-                                    (self.offset_y + self.y-1) % size[1]),
-                                            (r, g, b))
-                                self.image.putpixel(((self.offset_x + self.x-1) % size[0],
-                                    (self.offset_y + self.y-1) % size[1]),
-                                            (r, g, b))
-                            elif self.vector == 'left':
-                                self.image.putpixel(((self.offset_x + self.x+1) % size[0],
-                                    (self.offset_y + self.y+1) % size[1]),
-                                            (r, g, b))
-                                self.image.putpixel(((self.offset_x + self.x+1) % size[0],
-                                    (self.offset_y + self.y-1) % size[1]),
-                                            (r, g, b))
-                            elif self.vector == 'right':
-                                self.image.putpixel(((self.offset_x + self.x-1) % size[0],
-                                    (self.offset_y + self.y+1) % size[1]),
-                                            (r, g, b))
-                                self.image.putpixel(((self.offset_x + self.x-1) % size[0],
-                                    (self.offset_y + self.y-1) % size[1]),
-                                            (r, g, b))
-                            if self.last_spawn_color == [0.06666666666666667, 0.6470588235294118,
-                             0.2784313725490196] and self.color_level[1]==1:
-                                tmp_brightness = max(rgb_to_hsv(self.color)[1] -1./self.fade, 0)
+                        # random diffusion on the sides with bluuuueee !   
+                            if self.last_spawn_color == [0.047058823529411764,
+                                    0.14901960784313725,0.7019607843137254] and self.color_level[2]==3:
+                                # blue is hard-coded
+                                #print "fuuuuuusioooon"
+                                tmp_brightness = max(rgb_to_hsv(self.color)[1] -random.randint(1.,8.)/self.fade, 0)
                                 tmp_color = hsv_to_rgb(rgb_to_hsv(self.color)[0], tmp_brightness, rgb_to_hsv(self.color)[2])
-
+    
                                 r = int(round(tmp_color[0] * 255))
                                 g = int(round(tmp_color[1] * 255))
                                 b = int(round(tmp_color[2] * 255))
 
-                            if self.vector ==  'up':
-                                if ((self.y + self.offset_y)%2 == 0):
+                                # uncomment to smoothen the sides of the blue track    
+                                #r, g, b = self.mix_color((r, g, b), (actual_color[0], actual_color[1], actual_color[2]))
+
+                                if self.vector ==  'up':
                                     self.image.putpixel(((self.offset_x + self.x+1) % size[0],
                                     (self.offset_y + self.y+1) % size[1]),
                                             (r, g, b))
-                                else:
                                     self.image.putpixel(((self.offset_x + self.x-1) % size[0],
                                     (self.offset_y + self.y+1) % size[1]),
                                             (r, g, b))
-                            elif self.vector == 'down':
-                                if ((self.y + self.offset_y)%2 == 0):
+                                elif self.vector == 'down':
                                     self.image.putpixel(((self.offset_x + self.x+1) % size[0],
                                     (self.offset_y + self.y-1) % size[1]),
                                             (r, g, b))
-                                else :
                                     self.image.putpixel(((self.offset_x + self.x-1) % size[0],
                                     (self.offset_y + self.y-1) % size[1]),
                                             (r, g, b))
-                            elif self.vector == 'left':
-                                if ((self.x + self.offset_x)%2 == 0):
+                                elif self.vector == 'left':
                                     self.image.putpixel(((self.offset_x + self.x+1) % size[0],
                                     (self.offset_y + self.y+1) % size[1]),
                                             (r, g, b))
-                                else :
                                     self.image.putpixel(((self.offset_x + self.x+1) % size[0],
                                     (self.offset_y + self.y-1) % size[1]),
                                             (r, g, b))
-                            elif self.vector == 'right':
-                                if ((self.x + self.offset_x)%2 ==0):
+                                elif self.vector == 'right':
                                     self.image.putpixel(((self.offset_x + self.x-1) % size[0],
-                                    (self.offset_y + self.y+1) % size[1]),
+                                        (self.offset_y + self.y+1) % size[1]),
                                             (r, g, b))
-                                else :
                                     self.image.putpixel(((self.offset_x + self.x-1) % size[0],
                                     (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+                                if self.last_spawn_color == [0.06666666666666667, 0.6470588235294118,
+                             0.2784313725490196] and self.color_level[1]==1:
+                                    tmp_brightness = max(rgb_to_hsv(self.color)[1] -1./self.fade, 0)
+                                    tmp_color = hsv_to_rgb(rgb_to_hsv(self.color)[0], tmp_brightness, rgb_to_hsv(self.color)[2])
+
+                                    r = int(round(tmp_color[0] * 255))
+                                    g = int(round(tmp_color[1] * 255))
+                                    b = int(round(tmp_color[2] * 255))
+
+                                if self.vector ==  'up':
+                                    if ((self.y + self.offset_y)%2 == 0):
+                                        self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                                    else:
+                                        self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                                elif self.vector == 'down':
+                                    if ((self.y + self.offset_y)%2 == 0):
+                                        self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+                                    else :
+                                        self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+                                elif self.vector == 'left':
+                                    if ((self.x + self.offset_x)%2 == 0):
+                                        self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                                    else :
+                                        self.image.putpixel(((self.offset_x + self.x+1) % size[0],
+                                    (self.offset_y + self.y-1) % size[1]),
+                                            (r, g, b))
+                                elif self.vector == 'right':
+                                    if ((self.x + self.offset_x)%2 ==0):
+                                        self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                    (self.offset_y + self.y+1) % size[1]),
+                                            (r, g, b))
+                                    else :
+                                        self.image.putpixel(((self.offset_x + self.x-1) % size[0],
+                                        (self.offset_y + self.y-1) % size[1]),
                                             (r, g, b))
 
-                    else:
-                        self.color=(1.0, 1.0, 1.0)
-                        for i in range(len(self.color_level)):
-                            self.color_level[i] = 0
-                        self.speed = max(self.speed / 1.2, MIN_SPEED)
+                        else:
+                            self.color=(1.0, 1.0, 1.0)
+                            for i in range(len(self.color_level)):
+                                self.color_level[i] = 0
+                            self.speed = max(self.speed / 1.2, MIN_SPEED)
 
-        # finaly, we draw the grid
-        self.draw_grid()
+            # finaly, we draw the grid
+            self.draw_grid()
 
     def draw_grid(self):
         #drag from image
@@ -321,16 +317,42 @@ class LostInSpace(Application):
         if self.color == (1.0, 1.0, 1.0):
             self.model.set_pixel(self.y, self.x, 'black')
 
+    def first_spawns(self):
+                with self.model:
+                    # set initial color
+                    self.model.set_pixel(self.y, self.x, (1.0,1.0,1.0))
+                    self.color = self.model.get_pixel(self.y, self.x)
+                    self.base_color = self.color
+
+                    # spawn first stop near the player
+                    self.spawn_source([self.offset_x + self.x, self.offset_y + self.y + 2], color=0)
+                    self.spawn_source([self.offset_x + self.x - 2, self.offset_y + self.y + 1], color=1)
+                    self.spawn_source([self.offset_x + self.x - 2, self.offset_y + self.y - 1], color=2)
+                    self.spawn_source([self.offset_x + self.x, self.offset_y + self.y - 2], color=3)
+                    self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y + 1], color=4)
+                    self.spawn_source([self.offset_x + self.x + 2, self.offset_y + self.y - 1], color=5)
+                    self.state = 'running'
     def run(self):
+        if(self.ai):
+            self.state = 'init'
+            self.first_spawns()
+            random.seed()
+            for it in range(5):
+                self.spawn_source([random.randint(floor(self.x-self.width/2)+1,floor(self.x+self.width/2)-1),
+             random.randint(floor(self.y-self.height/2)+1,floor(self.y + self.height/2)-1)],parent=None)
         while self.state is not 'end':
             self.event()
             time.sleep(0.15/self.speed)
         image = self.image.resize((1000,1000))
         image.show()
-        image.save('output/' +strftime("%Y-%m-%d %H.%M.%S", gmtime()) + '.bmp')
+        if (self.ai):
+            image.save('output/ai_' +strftime("%Y-%m-%d %H.%M.%S", gmtime()) + '.bmp')
+        else:
+            image.save('output/' +strftime("%Y-%m-%d %H.%M.%S", gmtime()) + '.bmp')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Do something :D')
     parser.add_argument('-i', '--input', default='keyboard', choices=['keyboard','joystick'], help='Input method (default: keyboard)')
     parser.add_argument('--invader', action='store_true', help='Super Space Invader mod (default: disabled)')
+    parser.add_argument('-a-', '--auto', action='store_true', help='The computer plays alone (default: disabled)')
     LostInSpace(parser).start()
