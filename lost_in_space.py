@@ -35,7 +35,6 @@ class LostInSpace(Application):
         self.offset_x = 0
         self.model.set_all('white')
         self.state = 'init'
-        self.image = Image.new('RGB',size, (255,255,255))
         self.spawns = []
         self.speed = 1
         self.fade = 1
@@ -46,7 +45,12 @@ class LostInSpace(Application):
         parser = argparser.parse_args()
         self.invader = parser.invader
         self.ai = parser.auto
-    
+        self.file = parser.pattern
+        if (self.file==''):
+            self.image = Image.new('RGB',size, (255,255,255))
+        else:
+            self.image = Image.open(self.file)
+            self.image = self.image.resize(size)
     def find_spawn(self, coord):
         for spawn in self.spawns:
             if coord in spawn.points:
@@ -355,4 +359,5 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--input', default='keyboard', choices=['keyboard','joystick'], help='Input method (default: keyboard)')
     parser.add_argument('--invader', action='store_true', help='Super Space Invader mod (default: disabled)')
     parser.add_argument('-a-', '--auto', action='store_true', help='The computer plays alone (default: disabled)')
+    parser.add_argument('-p', '--pattern', default='', help='Input file, to begin the game with a default pattern as background (expected format : jpg or png)')
     LostInSpace(parser).start()
